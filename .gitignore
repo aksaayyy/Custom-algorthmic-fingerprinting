@@ -1,0 +1,26 @@
+# Environment
+.env
+token.json
+client_secrets.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Config
+.claude/
+
+# Temp / Downloads
+ig_hazy_*/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# OS
+.DS_Store
+Thumbs.db
