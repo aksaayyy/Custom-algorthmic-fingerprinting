@@ -5,13 +5,13 @@ Configuration constants for Instagram Reel Hazifier
 import os
 
 # FFmpeg settings
-FFMPEG_PRESET = "slow"
+FFMPEG_PRESET = "fast"
 FFMPEG_CRF_DEFAULT = 15
 FFMPEG_CRF_MIN = 12
 FFMPEG_CRF_MAX = 23
 FFMPEG_AUDIO_BITRATE = "320k"
-HIGH_QUALITY_SCALE = "-2:3840"  # Upscale to 4K portrait (auto width, height=3840) for YouTube Shorts
-FFMPEG_TIMEOUT = 600  # Max seconds per FFmpeg encode (10 min for 4K upscale)
+HIGH_QUALITY_SCALE = "-2:2560"  # Upscale to 1440p (auto width, height=2560) - fast enough to encode
+FFMPEG_TIMEOUT = 900  # Max seconds per FFmpeg encode (15 min safety net)
 
 # Processing parameters
 ZOOM_MIN = 1.01

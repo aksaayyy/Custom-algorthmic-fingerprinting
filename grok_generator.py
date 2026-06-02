@@ -100,7 +100,11 @@ class GrokGenerator:
             # Fallback to template-based generation
             return self._fallback_title_generation(video_context)
 
-        prompt = f"""Create a catchy, click-worthy YouTube Shorts title (under 60 characters) for a video about: {video_context}
+        import re
+        ctx_for_ai = video_context
+        if re.match(r'^https?://', ctx_for_ai.strip()):
+            ctx_for_ai = "an Instagram reel clip"
+        prompt = f"""Create a catchy, click-worthy YouTube Shorts title (under 60 characters) for a video about: {ctx_for_ai}
 
         Requirements:
         - Under 60 characters
@@ -132,7 +136,11 @@ class GrokGenerator:
             # Fallback to template-based generation
             return self._fallback_description_generation(video_context)
 
-        prompt = f"""Create an engaging YouTube Shorts description for a video about: {video_context}
+        import re
+        ctx_for_ai = video_context
+        if re.match(r'^https?://', ctx_for_ai.strip()):
+            ctx_for_ai = "an Instagram reel clip"
+        prompt = f"""Create an engaging YouTube Shorts description for a video about: {ctx_for_ai}
 
         Requirements:
         - Start with a hook (first 2 lines are critical)
@@ -172,7 +180,11 @@ class GrokGenerator:
             # Fallback to template-based generation
             return self._fallback_hashtag_generation(video_context, count)
 
-        prompt = f"""Generate {count} relevant, trending hashtags for a YouTube Shorts video about: {video_context}
+        import re
+        ctx_for_ai = video_context
+        if re.match(r'^https?://', ctx_for_ai.strip()):
+            ctx_for_ai = "an Instagram reel clip"
+        prompt = f"""Generate {count} relevant, trending hashtags for a YouTube Shorts video about: {ctx_for_ai}
 
         Requirements:
         - Mix of broad and niche hashtags
@@ -235,6 +247,13 @@ class GrokGenerator:
     def _fallback_title_generation(self, video_context: str = "") -> str:
         """Fallback title generation using templates"""
         import random
+        import re
+
+        # Never expose raw URLs in titles/descriptions
+        if re.match(r'^https?://', video_context.strip()):
+            clean_context = "this amazing clip"
+        else:
+            clean_context = video_context.replace('_', ' ').title() if video_context else "Amazing Moment"
 
         templates = [
             "Amazing Clip! {} 🔥",
@@ -248,9 +267,6 @@ class GrokGenerator:
             "This {} Changed Everything",
             "The Truth About {} 🤫"
         ]
-
-        # Clean up context
-        clean_context = video_context.replace('_', ' ').title() if video_context else "Amazing Moment"
         template = random.choice(templates)
         title = template.format(clean_context)
 

@@ -127,6 +127,26 @@ class InstagramDownloader:
         self.logger.error(f"Failed to download video from {url} after {MAX_DOWNLOAD_RETRIES} attempts")
         return None
 
+    def extract_info(self, url: str) -> Optional[dict]:
+        """Extract video metadata (title, uploader) using yt-dlp --dump-json"""
+        try:
+            cmd = [
+                "yt-dlp",
+                "--dump-json",
+                "--no-warnings",
+                "--no-playlist",
+                "--quiet",
+                url
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0 and result.stdout.strip():
+                import json
+                info = json.loads(result.stdout.strip().split('\n')[0])
+                return info
+        except Exception as e:
+            self.logger.warning(f"Failed to extract video info: {e}")
+        return None
+
     def cleanup(self):
         """Clean up temporary files created by this downloader"""
         if self.temp_dir and os.path.exists(self.temp_dir):

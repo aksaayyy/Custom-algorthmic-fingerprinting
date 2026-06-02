@@ -74,7 +74,12 @@ class NvidiaGenerator:
             self._cached_metadata = result
             return result
 
-        prompt = f"""Create a YouTube Shorts title, description (with CTAs), and tags for this content: {video_context}
+        import re
+        # Don't send raw URLs to the AI
+        ctx_for_ai = video_context
+        if re.match(r'^https?://', ctx_for_ai.strip()):
+            ctx_for_ai = "an Instagram reel clip"
+        prompt = f"""Create a YouTube Shorts title, description (with CTAs), and tags for this content: {ctx_for_ai}
 
 Return ONLY a JSON object with these fields. No markdown, no code blocks, no explanation:
 
@@ -112,7 +117,12 @@ Return ONLY a JSON object with these fields. No markdown, no code blocks, no exp
 
     def _fallback_complete_metadata(self, video_context: str = "") -> Dict[str, Any]:
         import random
-        clean_context = video_context.replace('_', ' ').title() if video_context else "Amazing Moment"
+        import re
+        # Never expose raw URLs in titles/descriptions
+        if re.match(r'^https?://', video_context.strip()):
+            clean_context = "this amazing clip"
+        else:
+            clean_context = video_context.replace('_', ' ').title() if video_context else "Amazing Moment"
 
         title_templates = [
             f"OMG {clean_context} 😳 #Shorts",

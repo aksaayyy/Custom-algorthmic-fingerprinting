@@ -337,8 +337,11 @@ class VideoProcessor:
                     main_cmd.extend(["-filter_complex", filter_complex])
                     if video_filter:
                         main_cmd.extend(["-map", "[vout]"])
-                    if has_audio and audio_filter:
-                        main_cmd.extend(["-map", "[aout]"])
+                    if has_audio:
+                        if audio_filter:
+                            main_cmd.extend(["-map", "[aout]"])
+                        else:
+                            main_cmd.extend(["-map", "0:a?"])
                 elif not video_filter and not audio_filter:
                     # No filtering needed, just copy
                     main_cmd.extend(["-c:v", "copy", "-c:a", "copy"])
@@ -399,8 +402,11 @@ class VideoProcessor:
                     cmd.extend(["-filter_complex", filter_complex])
                     if video_filter:
                         cmd.extend(["-map", "[vout]"])
-                    if has_audio and audio_filter:
-                        cmd.extend(["-map", "[aout]"])
+                    if has_audio:
+                        if audio_filter:
+                            cmd.extend(["-map", "[aout]"])
+                        else:
+                            cmd.extend(["-map", "0:a?"])
                 else:
                     # No filtering, copy streams
                     cmd.extend(["-c:v", "copy", "-c:a", "copy"])

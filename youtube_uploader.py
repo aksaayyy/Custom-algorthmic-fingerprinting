@@ -61,7 +61,7 @@ class YouTubeUploader:
         if NVIDIA_AVAILABLE:
             self.nvidia_generator = NvidiaGenerator(api_key=nvidia_api_key)
             if self.nvidia_generator.api_key:
-                self.logger.info("NVIDIA AI (Kimi K2.6) integration enabled for enhanced metadata generation")
+                self.logger.info("NVIDIA AI (Llama 3.1) integration enabled for enhanced metadata generation")
         elif GROK_AVAILABLE:
             self.grok_generator = GrokGenerator(api_key=grok_api_key)
             if self.grok_generator.api_key:
@@ -176,25 +176,24 @@ class YouTubeUploader:
 
     def _detect_shorts_format(self, video_path: str) -> bool:
         """
-        Detect if video is in Shorts format (vertical 9:16 aspect ratio)
+        Detect if video qualifies as YouTube Shorts.
+        Videos under 60 seconds → Shorts, 60+ seconds → regular video.
 
         Args:
             video_path: Path to video file
 
         Returns:
-            True if video appears to be Shorts format
+            True if video should be uploaded as Shorts
         """
         try:
             import subprocess
             import json
 
-            # Use ffprobe to get video dimensions
             cmd = [
                 "ffprobe",
                 "-v", "quiet",
                 "-print_format", "json",
-                "-show_streams",
-                "-select_streams", "v:0",
+                "-show_format",
                 video_path
             ]
 
@@ -202,20 +201,20 @@ class YouTubeUploader:
 
             if result.returncode == 0:
                 data = json.loads(result.stdout)
-                if data.get('streams'):
-                    stream = data['streams'][0]
-                    width = int(stream.get('width', 0))
-                    height = int(stream.get('height', 0))
+                duration = 0
+                if data.get('format') and data['format'].get('duration'):
+                    duration = float(data['format']['duration'])
 
-                    if width > 0 and height > 0:
-                        ratio = width / height
-                        # Shorts is typically 9:16 (0.5625) or close to vertical
-                        return 0.5 <= ratio <= 0.7  # Allow some tolerance
+                is_shorts = 0 < duration < 60
+                self.logger.info(
+                    f"Shorts detection: duration={duration:.1f}s → {'Shorts' if is_shorts else 'regular video'}"
+                )
+                return is_shorts
 
             return False
-        except Exception:
-            # If detection fails, assume it's Shorts since that's our target use case
-            return True
+        except Exception as e:
+            self.logger.warning(f"Shorts detection failed ({e}), defaulting to regular upload")
+            return False
 
     def upload_video(self, video_path: str, title: Optional[str] = None,
                      description: Optional[str] = None, tags: Optional[List[str]] = None,
@@ -252,13 +251,25 @@ class YouTubeUploader:
             if tags is None:
                 tags = self._generate_optimized_tags(video_path, context=context)
 
-            # Force Shorts for Instagram content (all reels are vertical 9:16)
-            if "#Shorts" not in title:
-                title = title.rstrip() + " #Shorts"
-            if "#Shorts" not in description:
-                description = "#Shorts\n" + description
-            # Ensure 'Shorts' is first tag
-            tags = ['Shorts'] + [t for t in tags if t.lower() != 'shorts']
+            # Detect format: <60s → Shorts, ≥60s → regular video
+            is_shorts = self._detect_shorts_format(video_path)
+            self.logger.info(f"Uploading as {'Shorts' if is_shorts else 'regular video'}")
+
+            if is_shorts:
+                if "#Shorts" not in title:
+                    title = title.rstrip() + " #Shorts"
+                if "#Shorts" not in description:
+                    description = "#Shorts\n" + description
+                tags = ['Shorts'] + [t for t in tags if t.lower() != 'shorts']
+            else:
+                # For regular videos, add category and remove any Shorts references
+                title = title.replace(" #Shorts", "").replace("#Shorts ", "").replace("#Shorts", "")
+                description_lines = []
+                for line in description.split('\n'):
+                    if '#Shorts' not in line:
+                        description_lines.append(line)
+                description = '\n'.join(description_lines).strip()
+                tags = [t for t in tags if t.lower() != 'shorts']
 
             # Prepare upload request body
             body = {

@@ -59,6 +59,13 @@ async def process_url_pipeline(url, downloader, processor, output_dir, args, not
                 await notify(f"❌ Failed to download video")
             return False
 
+        # Extract video metadata for AI context
+        video_info = downloader.extract_info(url)
+        if video_info:
+            uploader_context = f"Instagram reel by @{video_info.get('uploader', 'unknown')}: {video_info.get('title', '')}"
+        else:
+            uploader_context = url
+
         if notify:
             await notify(f"🔄 Processing video (zoom, color, 4K upscale)...")
 
@@ -86,6 +93,7 @@ async def process_url_pipeline(url, downloader, processor, output_dir, args, not
                     from config import NVIDIA_API_KEY
                     uploader = YouTubeUploader(
                         credentials_path=args.youtube_credentials,
+                        token_path=args.youtube_token,
                         grok_api_key=args.grok_api_key,
                         nvidia_api_key=NVIDIA_API_KEY
                     )
@@ -96,7 +104,7 @@ async def process_url_pipeline(url, downloader, processor, output_dir, args, not
                         description=args.youtube_description,
                         tags=args.youtube_tags.split(',') if args.youtube_tags else None,
                         privacy_status=args.youtube_privacy,
-                        context=url
+                        context=uploader_context
                     )
 
                     if upload_result:
@@ -350,8 +358,8 @@ Examples:
     parser.add_argument(
         '--speed',
         type=float,
-        default=1.005,
-        help='Speed adjustment factor (0.995-1.005, default: 1.005)'
+        default=1.0,
+        help='Speed adjustment factor (default: 1.0 - no change)'
     )
 
     parser.add_argument(
@@ -408,6 +416,13 @@ Examples:
     )
 
     parser.add_argument(
+        '--youtube-token',
+        type=str,
+        default='token.json',
+        help='Path to YouTube OAuth token file (default: token.json)'
+    )
+
+    parser.add_argument(
         '--grok-api-key',
         type=str,
         help='Grok API key for generating engaging titles, descriptions, and hashtags (can also be set via GROK_API_KEY env var)'
@@ -437,7 +452,7 @@ Examples:
         '--bot',
         type=str,
         default=None,
-        help='Bot name from bots_config.json (Bot1, Bot2, Bot3) — overrides individual args with per-bot config'
+        help='Bot name from bots_config.json (e.g. alishabitch_bot, NIghtNightBoii, GuardianAngle_bot)'
     )
 
     args = parser.parse_args()
@@ -449,8 +464,8 @@ Examples:
     if not (0.005 <= args.color <= 0.02):
         parser.error("--color must be between 0.005 and 0.02")
 
-    if not (0.995 <= args.speed <= 1.005):
-        parser.error("--speed must be between 0.995 and 1.005")
+    if not (0.5 <= args.speed <= 2.0):
+        parser.error("--speed must be between 0.5 and 2.0")
 
     if not (15 <= args.crf <= 23):
         parser.error("--crf must be between 15 and 23")
@@ -463,6 +478,7 @@ Examples:
         args.telegram_token = bot_token
         if args.upload_to_youtube:
             args.youtube_credentials = bot_cfg.get("youtube_credentials", args.youtube_credentials)
+            args.youtube_token = bot_cfg.get("youtube_token", "token.json")
             args.output_dir = bot_cfg.get("output_dir", args.output_dir)
             logger.info(f"Loaded bot '{args.bot}' — niche: {bot_cfg.get('niche', 'N/A')}")
     else:
@@ -555,6 +571,13 @@ Examples:
                 failed += 1
                 continue
 
+            # Extract video metadata for AI context
+            video_info = downloader.extract_info(url)
+            if video_info:
+                uploader_context = f"Instagram reel by @{video_info.get('uploader', 'unknown')}: {video_info.get('title', '')}"
+            else:
+                uploader_context = url
+
             # Process video
             output_path = processor.process(
                 video_path,
@@ -577,6 +600,7 @@ Examples:
                         from config import NVIDIA_API_KEY
                         uploader = YouTubeUploader(
                             credentials_path=args.youtube_credentials,
+                            token_path=args.youtube_token,
                             grok_api_key=args.grok_api_key,
                             nvidia_api_key=NVIDIA_API_KEY
                         )
@@ -587,7 +611,7 @@ Examples:
                             description=args.youtube_description,
                             tags=args.youtube_tags.split(',') if args.youtube_tags else None,
                             privacy_status=args.youtube_privacy,
-                            context=url
+                            context=uploader_context
                         )
 
                         if upload_result:
