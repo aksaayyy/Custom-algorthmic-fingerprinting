@@ -430,7 +430,14 @@ Examples:
         '--telegram-token',
         type=str,
         default=None,
-        help='Telegram bot token (overrides TELEGRAM_TOKEN env var)'
+        help='Telegram bot token (overrides env var)'
+    )
+
+    parser.add_argument(
+        '--bot',
+        type=str,
+        default=None,
+        help='Bot name from bots_config.json (Bot1, Bot2, Bot3) — overrides individual args with per-bot config'
     )
 
     args = parser.parse_args()
@@ -448,33 +455,39 @@ Examples:
     if not (15 <= args.crf <= 23):
         parser.error("--crf must be between 15 and 23")
 
-    # Resolve Telegram token: CLI arg > env var
-    from config import TELEGRAM_TOKEN
-    if args.telegram_token:
-        resolved_token = args.telegram_token
-    elif TELEGRAM_TOKEN:
-        resolved_token = TELEGRAM_TOKEN
+    # Load bot config from bots_config.json if --bot is specified
+    from config import TELEGRAM_TOKEN, load_bot_config
+    if args.bot:
+        bot_cfg = load_bot_config(args.bot)
+        bot_token = bot_cfg.get("telegram_token") or args.telegram_token or TELEGRAM_TOKEN
+        args.telegram_token = bot_token
+        if args.upload_to_youtube:
+            args.youtube_credentials = bot_cfg.get("youtube_credentials", args.youtube_credentials)
+            args.output_dir = bot_cfg.get("output_dir", args.output_dir)
+            logger.info(f"Loaded bot '{args.bot}' — niche: {bot_cfg.get('niche', 'N/A')}")
     else:
-        resolved_token = None
-    args.telegram_token = resolved_token
+        # Resolve Telegram token: CLI arg > env var
+        if args.telegram_token:
+            args.telegram_token = args.telegram_token
+        elif TELEGRAM_TOKEN:
+            args.telegram_token = TELEGRAM_TOKEN
+        else:
+            args.telegram_token = None
 
     # Handle telegram mode
     if args.telegram:
         if not args.telegram_token:
-            parser.error("Telegram token is required. Set TELEGRAM_TOKEN in .env or pass --telegram-token")
+            parser.error("Telegram token is required. Set in .env, bots_config.json, or pass --telegram-token")
         if not args.upload_to_youtube:
             logger.warning("Running Telegram bot without YouTube upload enabled - videos will be processed but not uploaded")
 
-        # Validate that we have necessary components for processing
         if args.upload_to_youtube and not os.path.exists(args.youtube_credentials):
             parser.error(f"YouTube credentials file not found: {args.youtube_credentials}")
 
-        # Setup directories
         output_dir = ensure_directory(args.output_dir)
         temp_dir = ensure_directory(args.temp_dir) if args.temp_dir else None
 
-        # Initialize components
-        global downloader, processor  # Make them accessible to the handler
+        global downloader, processor
         downloader = InstagramDownloader(temp_dir=temp_dir)
         processor = VideoProcessor(
             zoom_factor=args.zoom,
@@ -485,7 +498,6 @@ Examples:
             crf=args.crf
         )
 
-        # Run telegram bot mode
         run_telegram_bot_mode(args, output_dir)
         return
 

@@ -1,7 +1,9 @@
 # Environment
 .env
 token.json
+token_bot*.json
 client_secrets.json
+output/
 
 # Python
 __pycache__/

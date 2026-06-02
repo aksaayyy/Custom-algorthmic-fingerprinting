@@ -55,6 +55,24 @@ FFMPEG_THREADS = 0  # 0 = auto-detect based on CPU cores
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_PROCESSED_URL_TTL = 3600  # 1 hour before clearing processed URL cache
 
+# Multi-bot support
+BOTS_CONFIG_PATH = "bots_config.json"
+
+
+def load_bot_config(bot_name: str) -> dict:
+    """Load a specific bot's config from bots_config.json"""
+    import json
+    with open(BOTS_CONFIG_PATH) as f:
+        config = json.load(f)
+    for bot in config.get("bots", []):
+        if bot["name"] == bot_name:
+            # Resolve telegram token from env
+            token_env_var = bot.get("telegram_token_env")
+            if token_env_var:
+                bot["telegram_token"] = os.getenv(token_env_var)
+            return bot
+    raise ValueError(f"Bot '{bot_name}' not found in {BOTS_CONFIG_PATH}")
+
 # AI content generation
 NVIDIA_API_KEY = os.getenv('NVIDIA_API_KEY')
 NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
