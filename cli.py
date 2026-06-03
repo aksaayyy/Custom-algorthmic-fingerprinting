@@ -120,12 +120,20 @@ async def process_url_pipeline(url, downloader, processor, output_dir, args, not
                             if notify:
                                 await notify(f"💾 Storing in Telegram channel...")
                             from channel_uploader import send_video_to_channel
-                            send_video_to_channel(
+                            channel_ok = send_video_to_channel(
                                 output_path,
                                 TELEGRAM_CHANNEL_BOT_TOKEN,
                                 TELEGRAM_CHANNEL_ID,
                                 caption=f"{video_url}\n\n{uploader_context}"
                             )
+                            if channel_ok:
+                                logger.info("Telegram channel backup: SUCCESS")
+                            else:
+                                logger.warning("Telegram channel backup: FAILED")
+                                if notify:
+                                    await notify(f"⚠️ Telegram channel backup failed")
+                        else:
+                            logger.info("Telegram channel upload skipped: CHANNEL_BOT_TOKEN or CHANNEL_ID not set")
 
                         if args.delete_after_upload:
                             try:
@@ -636,12 +644,15 @@ Examples:
                             if TELEGRAM_CHANNEL_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
                                 print("  Storing in Telegram channel...")
                                 from channel_uploader import send_video_to_channel
-                                send_video_to_channel(
+                                channel_ok = send_video_to_channel(
                                     output_path,
                                     TELEGRAM_CHANNEL_BOT_TOKEN,
                                     TELEGRAM_CHANNEL_ID,
                                     caption=f"https://youtu.be/{video_id}\n\n{uploader_context}"
                                 )
+                                print(f"  Telegram channel backup: {'SUCCESS' if channel_ok else 'FAILED'}")
+                            else:
+                                print("  Telegram channel upload skipped: CHANNEL_BOT_TOKEN or CHANNEL_ID not set")
 
                             # Delete file after successful upload if requested
                             if args.delete_after_upload:
