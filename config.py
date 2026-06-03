@@ -55,6 +55,10 @@ FFMPEG_THREADS = 0  # 0 = auto-detect based on CPU cores
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_PROCESSED_URL_TTL = 3600  # 1 hour before clearing processed URL cache
 
+# Telegram channel for storing processed videos
+TELEGRAM_CHANNEL_BOT_TOKEN = os.getenv('TELEGRAM_CHANNEL_BOT_TOKEN')
+TELEGRAM_CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID')
+
 # Multi-bot support
 BOTS_CONFIG_PATH = "bots_config.json"
 

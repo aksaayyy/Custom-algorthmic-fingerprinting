@@ -114,6 +114,19 @@ async def process_url_pipeline(url, downloader, processor, output_dir, args, not
                         if notify:
                             await notify(f"✅ Uploaded to YouTube Shorts!\n{video_url}")
 
+                        # Upload to Telegram channel for storage
+                        from config import TELEGRAM_CHANNEL_BOT_TOKEN, TELEGRAM_CHANNEL_ID
+                        if TELEGRAM_CHANNEL_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
+                            if notify:
+                                await notify(f"💾 Storing in Telegram channel...")
+                            from channel_uploader import send_video_to_channel
+                            send_video_to_channel(
+                                output_path,
+                                TELEGRAM_CHANNEL_BOT_TOKEN,
+                                TELEGRAM_CHANNEL_ID,
+                                caption=f"{video_url}\n\n{uploader_context}"
+                            )
+
                         if args.delete_after_upload:
                             try:
                                 os.remove(output_path)
@@ -617,6 +630,18 @@ Examples:
                         if upload_result:
                             video_id = upload_result.get('id', 'unknown')
                             print(f"  YouTube Upload: SUCCESS (Video ID: {video_id})")
+
+                            # Upload to Telegram channel for storage
+                            from config import TELEGRAM_CHANNEL_BOT_TOKEN, TELEGRAM_CHANNEL_ID
+                            if TELEGRAM_CHANNEL_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
+                                print("  Storing in Telegram channel...")
+                                from channel_uploader import send_video_to_channel
+                                send_video_to_channel(
+                                    output_path,
+                                    TELEGRAM_CHANNEL_BOT_TOKEN,
+                                    TELEGRAM_CHANNEL_ID,
+                                    caption=f"https://youtu.be/{video_id}\n\n{uploader_context}"
+                                )
 
                             # Delete file after successful upload if requested
                             if args.delete_after_upload:
