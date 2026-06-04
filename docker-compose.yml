@@ -1,0 +1,38 @@
+services:
+  alishabitch:
+    build: .
+    container_name: ig-alishabitch
+    command: ["--bot", "alishabitch_bot"]
+    env_file: .env
+    volumes:
+      - ./credentials_bot1.json:/app/credentials_bot1.json
+      - ./token_bot1.json:/app/token_bot1.json
+      - bot1_output:/app/output/alishabitch
+    restart: unless-stopped
+
+  nightnight:
+    build: .
+    container_name: ig-nightnight
+    command: ["--bot", "NIghtNightBoii"]
+    env_file: .env
+    volumes:
+      - ./credentials_bot2.json:/app/credentials_bot2.json
+      - ./token_bot2.json:/app/token_bot2.json
+      - bot2_output:/app/output/nightnight
+    restart: unless-stopped
+
+  guardianangle:
+    build: .
+    container_name: ig-guardianangle
+    command: ["--bot", "GuardianAngle_bot"]
+    env_file: .env
+    volumes:
+      - ./credentials_bot3.json:/app/credentials_bot3.json
+      - ./token_bot3.json:/app/token_bot3.json
+      - bot3_output:/app/output/guardianangle
+    restart: unless-stopped
+
+volumes:
+  bot1_output:
+  bot2_output:
+  bot3_output:

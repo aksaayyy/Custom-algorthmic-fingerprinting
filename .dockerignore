@@ -1,0 +1,17 @@
+.env
+.git/
+.gitignore
+.git-credentials
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+output/
+*.mp4
+*.mov
+*.mkv
+*.webm
+ig_hazy_*/
+venv/
+.venv/
