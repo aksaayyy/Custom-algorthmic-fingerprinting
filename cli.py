@@ -115,6 +115,7 @@ async def process_url_pipeline(url, downloader, processor, output_dir, args, not
                             await notify(f"✅ Uploaded to YouTube Shorts!\n{video_url}")
 
                         # Upload to Telegram channel for storage
+                        channel_ok = True
                         from config import TELEGRAM_CHANNEL_BOT_TOKEN, TELEGRAM_CHANNEL_ID
                         if TELEGRAM_CHANNEL_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
                             if notify:
@@ -135,7 +136,8 @@ async def process_url_pipeline(url, downloader, processor, output_dir, args, not
                         else:
                             logger.info("Telegram channel upload skipped: CHANNEL_BOT_TOKEN or CHANNEL_ID not set")
 
-                        if args.delete_after_upload:
+                        # Delete file only after BOTH YouTube and Telegram succeed
+                        if args.delete_after_upload and channel_ok:
                             try:
                                 os.remove(output_path)
                                 logger.info("Cleanup: Deleted local file after upload")
@@ -640,6 +642,7 @@ Examples:
                             print(f"  YouTube Upload: SUCCESS (Video ID: {video_id})")
 
                             # Upload to Telegram channel for storage
+                            channel_ok = True
                             from config import TELEGRAM_CHANNEL_BOT_TOKEN, TELEGRAM_CHANNEL_ID
                             if TELEGRAM_CHANNEL_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
                                 print("  Storing in Telegram channel...")
@@ -654,8 +657,8 @@ Examples:
                             else:
                                 print("  Telegram channel upload skipped: CHANNEL_BOT_TOKEN or CHANNEL_ID not set")
 
-                            # Delete file after successful upload if requested
-                            if args.delete_after_upload:
+                            # Delete file only after BOTH YouTube and Telegram succeed
+                            if args.delete_after_upload and channel_ok:
                                 try:
                                     os.remove(output_path)
                                     print(f"  Cleanup: Deleted local file after upload")
