@@ -1,14 +1,27 @@
 # Environment
 .env
+.env.*
+!.env.example
+
+# Credentials & secrets
+credentials*.json
+bots_config.json
+cookies*.json
+client_secrets.json
 token.json
 token_bot*.json
-client_secrets.json
-output/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
 
 # Python
 __pycache__/
 *.py[cod]
 *.egg-info/
+.venv/
+venv/
 dist/
 build/
 
@@ -17,6 +30,7 @@ build/
 
 # Temp / Downloads
 ig_hazy_*/
+output/
 *.mp4
 *.mov
 *.avi
